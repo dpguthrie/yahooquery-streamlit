@@ -158,7 +158,7 @@ def main():
                     alt.Chart(df.reset_index()).mark_line().encode(
                         alt.Y('close:Q', scale=alt.Scale(zero=False)),
                         x='dates',
-                        color='symbols'
+                        color='symbol'
                     )
                 )
             else:
