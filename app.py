@@ -59,25 +59,23 @@ def main():
     tickers = Ticker(symbols)
 
     page = st.sidebar.selectbox("Choose a page", [
-        "Homepage", "Base", "Options", "Historical Pricing"])
+        "Homepage", "Base", "Base - Multiple", "Options", "Historical Pricing"])
+
+    history_args = {
+        'period': '1y', 'interval': '1d',
+        'start': datetime.datetime.now() - datetime.timedelta(days=365),
+        'end': None}
 
     st.markdown("# Welcome to [YahooQuery](https://github.com/dpguthrie/yahooquery)")
 
     if page == "Homepage":
         st.markdown("""
-            ## Streamlit
-
-            ### Instructions
+            ## Streamlit Instructions
             Enter a symbol or list of symbols in the box to the left (**comma
             separated**).  Then select different pages in the dropdown to view
             the data available to you.
 
-            ### Data
-            The data is broken up into three different pages:  Base, Options,
-            and Historical Pricing.  These correspond to three different urls
-            the package utilizes to retrieve data.
-
-            ## Short ReadMe
+            ## Short README
 
             ### Install
             ```python
@@ -110,9 +108,35 @@ def main():
             format_func=format_func)
         st.help(getattr(Ticker, endpoint))
         st.code(f"Ticker({symbols}).{endpoint}", language="python")
-        with st.spinner():
-            data = get_data(tickers, endpoint)
-            st.write(data)
+        data = get_data(tickers, endpoint)
+        st.write(data)
+    elif page == "Base - Multiple":
+        st.header("Base Endpoints - Multiple")
+        st.markdown("""
+            Two methods to the `Ticker` class allow you to obtain multiple
+            endpoints with one call.  The `get_endpoints` method takes a list
+            of allowable endpoints, which you can view through `Ticker._ENDPOINTS`,
+            and the `all_endpoints` property retrieves all Base endpoints""")
+        method = st.selectbox(
+            "Select Method", options=['All Endpoints', 'Multiple Endpoints'])
+        if method == "All Endpoints":
+            st.help(getattr(Ticker, 'all_endpoints'))
+            st.code(f"Ticker({symbols}).all_endpoints", language="python")
+            data = get_data(tickers, "all_endpoints")
+            st.json(data)
+        else:
+
+            default_endpoints = ['assetProfile']
+            endpoints = st.multiselect(
+                "Select endpoints", options=sorted(Ticker._ENDPOINTS),
+                default=default_endpoints)
+            st.help(getattr(Ticker, "get_endpoints"))
+            st.code(f"Ticker({symbols}).get_endpoints({endpoints})", language="python")
+            if not endpoints:
+                st.warning("You must select at least one endpoint")
+            else:
+                data = get_data(tickers, "get_endpoints")(endpoints)
+                st.json(data)
     elif page == "Options":
         st.header("Option Chain")
         st.help(getattr(Ticker, 'option_chain'))
@@ -121,39 +145,37 @@ def main():
             Yahooquery also gives you the ability to view option chain data
             for all expiration dates for a given symbol(s)
         """)
-        with st.spinner():
-            data = get_data(tickers, 'option_chain')
-            st.write(data)
-    elif page == "Historical Pricing":
+        data = get_data(tickers, 'option_chain')
+        st.dataframe(data)
+    else:
         st.header("Historical Pricing")
         st.write("""
             Retrieve historical pricing data for a given symbol(s)
         """)
+        st.help(getattr(Ticker, 'history'))
         st.markdown("""
-            1. Select a period **or** enter start and end dates.  **This
-               application defaults both start and end dates at today's
-               date.  If you don't change them, None will be used for both.**
+            1. Select a period **or** enter start and end dates.
             2. Select interval (**note:  some intervals are not available for
                 certain lengths of time**)
         """)
-        period = st.selectbox(
-            "Select Period", options=Ticker._PERIODS, index=5)
-        st.markdown("**OR**")
-        start = st.date_input("Select Start Date")
-        end = st.date_input("Select End Date")
-        st.markdown("**THEN**")
-        interval = st.selectbox(
-            "Select Interval", options=Ticker._INTERVALS, index=8)
-        print(start==datetime.datetime.today().date())
+        option_1 = st.selectbox(
+            "Select Period or Start / End Dates", ["Period", "Dates"], 0)
+        if option_1 == "Period":
+            history_args['period'] = st.selectbox(
+                "Select Period", options=Ticker._PERIODS, index=5)
+            history_args['start'] = None
+            history_args['end'] = None
+        else:
+            history_args['start'] = st.date_input(
+                "Select Start Date", value=history_args['start'])
+            history_args['end'] = st.date_input("Select End Date")
+            history_args['period'] = None
 
-        with st.spinner("Retrieving data..."):
-            today = datetime.datetime.today().date()
-            if start == today:
-                start = None
-            if end == today:
-                end = None
-            df = tickers.history(
-                period=period, interval=interval, start=start, end=end)
+        st.markdown("**THEN**")
+        history_args['interval'] = st.selectbox(
+            "Select Interval", options=Ticker._INTERVALS, index=8)
+        
+        df = tickers.history(**history_args)
 
         if isinstance(df, dict):
             st.write(df)
