@@ -5,7 +5,7 @@ from yahooquery import Ticker
 import datetime
 
 
-AVAILABLE_DICTIONARIES = {
+BASE_ENDPOINTS = {
     'asset_profile': 'Asset Profile',
     'calendar_events': 'Calendar Events',
     'esg_scores': 'ESG Scores',
@@ -17,10 +17,7 @@ AVAILABLE_DICTIONARIES = {
     'quote_type': 'Quote Type',
     'share_purchase_activity': 'Share Purchase Activity',
     'summary_detail': 'Summary Detail',
-    'summary_profile': 'Summary Profile'
-}
-
-AVAILABLE_DATAFRAMES = {
+    'summary_profile': 'Summary Profile',
     'balance_sheet': 'Balance Sheet',
     'cash_flow': 'Cash Flow',
     'company_officers': 'Company Officers',
@@ -32,30 +29,18 @@ AVAILABLE_DATAFRAMES = {
     'insider_transactions': 'Insider Transactions',
     'institution_ownership': 'Institution Ownership',
     'recommendation_trend': 'Recommendation Trends',
-    'sec_filings': 'SEC Filings'
+    'sec_filings': 'SEC Filings',
+    'fund_bond_holdings': 'Fund Bond Holdings',
+    'fund_bond_ratings': 'Fund Bond Ratings',
+    'fund_equity_holdings': 'Fund Equity Holdings',
+    'fund_holding_info': 'Fund Holding Information',
+    'fund_performance': 'Fund Performance',
+    'fund_sector_weightings': 'Fund Sector Weightings',
+    'fund_top_holdings': 'Fund Top Holdings',
 }
 
-FUND_SPECIFIC = {
-    'fund_bond_holdings': 'Bond Holdings',
-    'fund_bond_ratings': 'Bond Ratings',
-    'fund_equity_holdings': 'Equity Holdings',
-    'fund_holding_info': 'Holding Information',
-    'fund_performance': 'Performance',
-    'fund_sector_weightings': 'Sector Weightings',
-    'fund_top_holdings': 'Top Holdings',
-}
-
-
-def format_func_dicts(option):
-    return AVAILABLE_DICTIONARIES[option]
-
-
-def format_func_df(option):
-    return AVAILABLE_DATAFRAMES[option]
-
-
-def format_fund(option):
-    return FUND_SPECIFIC[option]
+def format_func(option):
+    return BASE_ENDPOINTS[option]
 
 
 @st.cache
@@ -71,53 +56,73 @@ def main():
     symbols = st.sidebar.text_input(
         "Enter symbol or list of symbols (comma separated)", value="aapl")
     symbols = [x.strip() for x in symbols.split(',')]
-    yq = Ticker(symbols)
+    tickers = Ticker(symbols)
 
     page = st.sidebar.selectbox("Choose a page", [
-        "Homepage", "Dictionaries", "Dataframes", "Option Chain",
-        "Historical Pricing", "Mutual Funds"])
+        "Homepage", "Base", "Options", "Historical Pricing"])
 
-    st.title("Welcome to YahooQuery")
+    st.markdown("# Welcome to [YahooQuery](https://github.com/dpguthrie/yahooquery)")
 
     if page == "Homepage":
-        st.write("""
-            Enter a symbol or list of symbols and select a page from the left
-            to the data available to you.""")
-        st.markdown("[View code here](https://github.com/dpguthrie/yahooquery)")
-    elif page == "Dictionaries":
-        st.header("Dictionaries")
-        st.write("""
-            Some data is returned as python dictionaries; use the dropdown
-            below to view some of the data available to you through yahooquery.
+        st.markdown("""
+            ## Streamlit
+
+            ### Instructions
+            Enter a symbol or list of symbols in the box to the left (**comma
+            separated**).  Then select different pages in the dropdown to view
+            the data available to you.
+
+            ### Data
+            The data is broken up into three different pages:  Base, Options,
+            and Historical Pricing.  These correspond to three different urls
+            the package utilizes to retrieve data.
+
+            ## Short ReadMe
+
+            ### Install
+            ```python
+            pip install yahooquery
+            ```
+
+            ### Ticker
+            The `Ticker` class provides the access point to data residing on
+            Yahoo Finance.  It accepts either a symbol or list of symbols.
+            Additionally, you can supply `formatted` as a keyword argument
+            to the class to format the data returned from the API (default is
+            `True`)
+
+            ```python
+            from yahooquery import Ticker
+
+            aapl = Ticker('aapl')
+            # or
+            tickers = Ticker(['aapl', 'msft', 'fb'])
+            ```
         """)
-        d_endpoint = st.selectbox(
-            "Select Dictionary Endpoint",
-            options=list(AVAILABLE_DICTIONARIES.keys()),
-            format_func=format_func_dicts)
-        with st.spinner():
-            data = get_data(yq, d_endpoint)
-            st.json(data)
-    elif page == "Dataframes":
-        st.header("Dataframes")
+        st.help(tickers)
+    elif page == "Base":
+        st.header("Base Endpoints")
         st.write("""
-            Some data is returned as pandas DataFrames; use the dropdown
-            below to view some of the data available to you through yahooquery.
-        """)
-        df_endpoint = st.selectbox(
-            "Select DataFrame Endpoint",
-            options=list(AVAILABLE_DATAFRAMES.keys()),
-            format_func=format_func_df)
+            Select an option below to see the data available through
+            the base endpoints.""")
+        endpoint = st.selectbox(
+            "Select Endpoint", options=sorted(list(BASE_ENDPOINTS.keys())),
+            format_func=format_func)
+        st.help(getattr(Ticker, endpoint))
+        st.code(f"Ticker({symbols}).{endpoint}", language="python")
         with st.spinner():
-            data = get_data(yq, df_endpoint)
+            data = get_data(tickers, endpoint)
             st.write(data)
-    elif page == "Option Chain":
+    elif page == "Options":
         st.header("Option Chain")
+        st.help(getattr(Ticker, 'option_chain'))
+        st.code(f"Ticker({symbols}).option_chain", language="python")
         st.write("""
             Yahooquery also gives you the ability to view option chain data
             for all expiration dates for a given symbol(s)
         """)
         with st.spinner():
-            data = get_data(yq, 'option_chain')
+            data = get_data(tickers, 'option_chain')
             st.write(data)
     elif page == "Historical Pricing":
         st.header("Historical Pricing")
@@ -147,7 +152,7 @@ def main():
                 start = None
             if end == today:
                 end = None
-            df = yq.history(
+            df = tickers.history(
                 period=period, interval=interval, start=start, end=end)
 
         if isinstance(df, dict):
@@ -170,20 +175,6 @@ def main():
                 )
             st.write("", "", chart)
             st.dataframe(df)
-    else:
-        st.header("Mutual Funds")
-        st.write("""
-            There's additional data available to mutual funds, etfs, etc.
-            Use the dropdown below to view additional data available to these
-            security types.
-        """)
-        fund_endpoint = st.selectbox(
-            "Select Fund Endpoint",
-            options=list(FUND_SPECIFIC.keys()),
-            format_func=format_fund)
-        with st.spinner():
-            data = get_data(yq, fund_endpoint)
-            st.write(data)
 
 
 if __name__ == "__main__":
