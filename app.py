@@ -44,9 +44,9 @@ def format_func(option):
 
 
 @st.cache
-def get_data(ticker, attribute):
+def get_data(ticker, attribute, *args):
     try:
-        data = getattr(ticker, attribute)()
+        data = getattr(ticker, attribute)(*args)
     except TypeError:
         data = getattr(ticker, attribute)
     return data
@@ -107,8 +107,16 @@ def main():
             "Select Endpoint", options=sorted(list(BASE_ENDPOINTS.keys())),
             format_func=format_func)
         st.help(getattr(Ticker, endpoint))
-        st.code(f"Ticker({symbols}).{endpoint}", language="python")
-        data = get_data(tickers, endpoint)
+        is_property = isinstance(getattr(Ticker, endpoint), property)
+        if is_property:
+            st.code(f"Ticker({symbols}).{endpoint}", language="python")
+            data = get_data(tickers, endpoint)
+        else:
+            frequency = st.selectbox(
+                "Select Frequency", options=["Annual", "Quarterly"])
+            arg = frequency[:1].lower()
+            st.code(f"Ticker({symbols}).{endpoint}(frequency='{arg}')")
+            data = get_data(tickers, endpoint, arg)
         st.write(data)
     elif page == "Base - Multiple":
         st.header("Base Endpoints - Multiple")
@@ -140,12 +148,12 @@ def main():
                 st.json(data)
     elif page == "Options":
         st.header("Option Chain")
-        st.help(getattr(Ticker, 'option_chain'))
-        st.code(f"Ticker({symbols}).option_chain", language="python")
         st.write("""
             Yahooquery also gives you the ability to view option chain data
             for all expiration dates for a given symbol(s)
         """)
+        st.help(getattr(Ticker, 'option_chain'))
+        st.code(f"Ticker({symbols}).option_chain", language="python")
         data = get_data(tickers, 'option_chain')
         st.dataframe(data)
     else:
@@ -175,7 +183,11 @@ def main():
         st.markdown("**THEN**")
         history_args['interval'] = st.selectbox(
             "Select Interval", options=Ticker._INTERVALS, index=8)
-        
+        args_string = [
+            str(k) + "='" + str(v) + "'"  for k, v in history_args.items()
+            if v is not None]
+        st.code(f"Ticker({symbols}).history({', '.join(args_string)})",
+                language="python")
         df = tickers.history(**history_args)
 
         if isinstance(df, dict):
