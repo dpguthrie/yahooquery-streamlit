@@ -118,7 +118,8 @@ def main():
             of allowable endpoints, which you can view through `Ticker._ENDPOINTS`,
             and the `all_endpoints` property retrieves all Base endpoints""")
         method = st.selectbox(
-            "Select Method", options=['All Endpoints', 'Multiple Endpoints'])
+            "Select Method", options=['All Endpoints', 'Multiple Endpoints'],
+            index=1)
         if method == "All Endpoints":
             st.help(getattr(Ticker, 'all_endpoints'))
             st.code(f"Ticker({symbols}).all_endpoints", language="python")
