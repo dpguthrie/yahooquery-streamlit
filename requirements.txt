@@ -1,2 +1,2 @@
 streamlit==0.52.2
-yahooquery==1.0.9
+yahooquery==1.0.10
