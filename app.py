@@ -18,10 +18,15 @@ BASE_ENDPOINTS = {
     'share_purchase_activity': 'Share Purchase Activity',
     'summary_detail': 'Summary Detail',
     'summary_profile': 'Summary Profile',
+    'industry_trend': 'Industry Trend',
+    'index_trend': 'Index Trend',
+    'sector_trend': 'Sector Trend',
     'balance_sheet': 'Balance Sheet',
     'cash_flow': 'Cash Flow',
     'company_officers': 'Company Officers',
     'earning_history': 'Earning History',
+    'earnings_trend': 'Earnings Trend',
+    'earnings': 'Earnings',
     'fund_ownership': 'Fund Ownership',
     'grading_history': 'Grading History',
     'income_statement': 'Income Statement',
@@ -107,7 +112,10 @@ def main():
             "Select Endpoint", options=sorted(list(BASE_ENDPOINTS.keys())),
             format_func=format_func)
         st.help(getattr(Ticker, endpoint))
-        st.code(f"Ticker({symbols}).{endpoint}", language="python")
+        if endpoint in ['cash_flow', 'balance_sheet', 'income_statement']:
+            st.code(f"Ticker({symbols}).{endpoint}()", language="python")
+        else:
+            st.code(f"Ticker({symbols}).{endpoint}", language="python")
         data = get_data(tickers, endpoint)
         st.write(data)
     elif page == "Base - Multiple":
