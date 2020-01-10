@@ -245,7 +245,7 @@ def options_view(tickers: Ticker, symbols: List[str], formatted_str: str):
     """
     )
     st.help(getattr(Ticker, "option_chain"))
-    st.code(f"Ticker({symbols}{formatted_str}).option_chain", language="python")
+    st.code(f"Ticker({symbols}).option_chain", language="python")
     data = get_data(tickers, "option_chain")
     st.dataframe(data)
 
@@ -295,7 +295,7 @@ def history_view(tickers: Ticker, symbols: List[str], formatted_str: str):
         "Select Interval", options=Ticker.INTERVALS, index=8  # pylint: disable=protected-access
     )
     args_string = [str(k) + "='" + str(v) + "'" for k, v in history_args.items() if v is not None]
-    st.code(f"Ticker({symbols}{formatted_str}).history({', '.join(args_string)})", language="python")
+    st.code(f"Ticker({symbols}).history({', '.join(args_string)})", language="python")
     dataframe = tickers.history(**history_args)
 
     if isinstance(dataframe, dict):
