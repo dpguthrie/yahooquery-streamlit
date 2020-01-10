@@ -199,7 +199,7 @@ def base_multiple_view(tickers: Ticker, symbols: List[str], formatted_str: str):
         endpoints with one call.
 
         - the `get_endpoints` method takes a list
-        of allowable endpoints, which you can view through `Ticker._ENDPOINTS`
+        of allowable endpoints, which you can view through `Ticker.ENDPOINTS`
         - the `all_endpoints` property retrieves all Base endpoints"""
     )
     method = st.selectbox("Select Method", options=["All Endpoints", "Multiple Endpoints"], index=1)
@@ -213,7 +213,7 @@ def base_multiple_view(tickers: Ticker, symbols: List[str], formatted_str: str):
         default_endpoints = ["assetProfile"]
         endpoints = st.multiselect(
             "Select endpoints",
-            options=sorted(Ticker._ENDPOINTS),  # pylint: disable=protected-access
+            options=sorted(Ticker.ENDPOINTS),  # pylint: disable=protected-access
             default=default_endpoints,
         )
         st.help(getattr(Ticker, "get_endpoints"))
@@ -280,7 +280,7 @@ def history_view(tickers: Ticker, symbols: List[str], formatted_str: str):
     option_1 = st.selectbox("Select Period or Start / End Dates", ["Period", "Dates"], 0)
     if option_1 == "Period":
         history_args["period"] = st.selectbox(
-            "Select Period", options=Ticker._PERIODS, index=5  # pylint: disable=protected-access
+            "Select Period", options=Ticker.PERIODS, index=5  # pylint: disable=protected-access
         )
 
         history_args["start"] = None
@@ -292,7 +292,7 @@ def history_view(tickers: Ticker, symbols: List[str], formatted_str: str):
 
     st.markdown("**THEN**")
     history_args["interval"] = st.selectbox(
-        "Select Interval", options=Ticker._INTERVALS, index=8  # pylint: disable=protected-access
+        "Select Interval", options=Ticker.INTERVALS, index=8  # pylint: disable=protected-access
     )
     args_string = [str(k) + "='" + str(v) + "'" for k, v in history_args.items() if v is not None]
     st.code(f"Ticker({symbols}{formatted_str}).history({', '.join(args_string)})", language="python")
