@@ -305,13 +305,13 @@ def history_view(tickers: Ticker, symbols: List[str], formatted_str: str):
             chart = (
                 alt.Chart(dataframe.reset_index())
                 .mark_line()
-                .encode(alt.Y("close:Q", scale=alt.Scale(zero=False)), x="dates", color="symbol")
+                .encode(alt.Y("adjclose:Q", scale=alt.Scale(zero=False)), x="dates", color="symbol")
             )
         else:
             chart = (
                 alt.Chart(dataframe.reset_index())
                 .mark_line()
-                .encode(alt.Y("close:Q", scale=alt.Scale(zero=False)), x="dates:T")
+                .encode(alt.Y("adjclose:Q", scale=alt.Scale(zero=False)), x="dates:T")
             )
         st.write("", "", chart)
         st.dataframe(dataframe)
