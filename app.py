@@ -297,7 +297,6 @@ def history_view(tickers: Ticker, symbols: List[str], formatted_str: str):
     args_string = [str(k) + "='" + str(v) + "'" for k, v in history_args.items() if v is not None]
     st.code(f"Ticker({symbols}).history({', '.join(args_string)})", language="python")
     dataframe = tickers.history(**history_args)
-    print(dataframe.reset_index().head())
 
     if isinstance(dataframe, dict):
         st.write(dataframe)
@@ -306,13 +305,13 @@ def history_view(tickers: Ticker, symbols: List[str], formatted_str: str):
             chart = (
                 alt.Chart(dataframe.reset_index())
                 .mark_line()
-                .encode(alt.Y("adjclose:Q", scale=alt.Scale(zero=False)), x="dates", color="symbol")
+                .encode(alt.Y("adjclose:Q", scale=alt.Scale(zero=False)), x="date", color="symbol")
             )
         else:
             chart = (
                 alt.Chart(dataframe.reset_index())
                 .mark_line()
-                .encode(alt.Y("adjclose:Q", scale=alt.Scale(zero=False)), x="dates")
+                .encode(alt.Y("adjclose:Q", scale=alt.Scale(zero=False)), x="index")
             )
         st.write("", "", chart)
         st.dataframe(dataframe)
