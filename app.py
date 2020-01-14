@@ -126,12 +126,6 @@ def homepage_view(tickers: Ticker, symbols: List[str], formatted_str: str):
         separated**).  Then select different pages in the dropdown to view
         the data available to you.
 
-        ### Installation
-
-        ```python
-        pip install yahooquery
-        ```
-
         ### Ticker Usage
 
         The `Ticker` class provides the access point to data residing on
