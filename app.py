@@ -241,7 +241,7 @@ def options_view(tickers: Ticker, symbols: List[str], formatted_str: str):
     st.help(getattr(Ticker, "option_chain"))
     st.code(f"Ticker({symbols}).option_chain", language="python")
     data = get_data(tickers, "option_chain")
-    st.dataframe(data)
+    st.write(data)
 
 
 def history_view(tickers: Ticker, symbols: List[str], formatted_str: str):
