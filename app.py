@@ -294,7 +294,7 @@ def history_view(tickers: Ticker, symbols: List[str], formatted_str: str):
     if isinstance(dataframe, dict):
         st.write(dataframe)
     else:
-        if len(symbols) > 1:
+        if len(tickers.symbols) > 1:
             chart = (
                 alt.Chart(dataframe.reset_index())
                 .mark_line()
