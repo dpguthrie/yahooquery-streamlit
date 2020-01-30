@@ -82,7 +82,6 @@ def main():
     symbols = st.sidebar.text_input(
         "Enter symbol or list of symbols (comma, space separated)", value="aapl"
     )
-    symbols = [x.strip() for x in symbols.split(",")]
     formatted = st.sidebar.radio(
         "Format data returned from API", options=[True, False])
     formatted_str = "" if formatted else ", formatted=False"
