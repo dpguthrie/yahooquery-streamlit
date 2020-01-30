@@ -136,7 +136,7 @@ def homepage_view(tickers: Ticker, symbols: List[str], formatted_str: str):
         ```python
         from yahooquery import Ticker
 
-        tickers = Ticker({symbols})
+        tickers = Ticker('{symbols}')
         ```
     """
     )
@@ -165,12 +165,12 @@ def base_view(tickers: Ticker, symbols: List[str], formatted_str: str):
     st.help(getattr(Ticker, endpoint))
     is_property = isinstance(getattr(Ticker, endpoint), property)
     if is_property:
-        st.code(f"Ticker({symbols}{formatted_str}).{endpoint}", language="python")
+        st.code(f"Ticker('{symbols}'{formatted_str}).{endpoint}", language="python")
         data = get_data(tickers, endpoint)
     else:
         frequency = st.selectbox("Select Frequency", options=["Annual", "Quarterly"])
         arg = frequency[:1].lower()
-        st.code(f"Ticker({symbols}{formatted_str}).{endpoint}(frequency='{arg}')")
+        st.code(f"Ticker('{symbols}'{formatted_str}).{endpoint}(frequency='{arg}')")
         data = get_data(tickers, endpoint, arg)
     st.write(data)
 
@@ -198,7 +198,7 @@ def base_multiple_view(tickers: Ticker, symbols: List[str], formatted_str: str):
     method = st.selectbox("Select Method", options=["All Endpoints", "Multiple Endpoints"], index=1)
     if method == "All Endpoints":
         st.help(getattr(Ticker, "all_endpoints"))
-        st.code(f"Ticker({symbols}{formatted_str}).all_endpoints", language="python")
+        st.code(f"Ticker('{symbols}'{formatted_str}).all_endpoints", language="python")
         data = get_data(tickers, "all_endpoints")
         st.json(data)
     else:
@@ -210,7 +210,7 @@ def base_multiple_view(tickers: Ticker, symbols: List[str], formatted_str: str):
             default=default_endpoints,
         )
         st.help(getattr(Ticker, "get_endpoints"))
-        st.code(f"Ticker({symbols}{formatted_str}).get_endpoints({endpoints})", language="python")
+        st.code(f"Ticker('{symbols}'{formatted_str}).get_endpoints({endpoints})", language="python")
         if not endpoints:
             st.warning("You must select at least one endpoint")
         else:
@@ -238,7 +238,7 @@ def options_view(tickers: Ticker, symbols: List[str], formatted_str: str):
     """
     )
     st.help(getattr(Ticker, "option_chain"))
-    st.code(f"Ticker({symbols}).option_chain", language="python")
+    st.code(f"Ticker('{symbols}').option_chain", language="python")
     data = get_data(tickers, "option_chain")
     st.write(data)
 
@@ -288,7 +288,7 @@ def history_view(tickers: Ticker, symbols: List[str], formatted_str: str):
         "Select Interval", options=Ticker.INTERVALS, index=8  # pylint: disable=protected-access
     )
     args_string = [str(k) + "='" + str(v) + "'" for k, v in history_args.items() if v is not None]
-    st.code(f"Ticker({symbols}).history({', '.join(args_string)})", language="python")
+    st.code(f"Ticker('{symbols}').history({', '.join(args_string)})", language="python")
     dataframe = tickers.history(**history_args)
 
     if isinstance(dataframe, dict):
