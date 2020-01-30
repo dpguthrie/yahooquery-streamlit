@@ -80,7 +80,7 @@ def main():
     """Run this to run the application"""
     st.sidebar.subheader("YahooQuery")
     symbols = st.sidebar.text_input(
-        "Enter symbol or list of symbols (comma separated)", value="aapl"
+        "Enter symbol or list of symbols (comma, space separated)", value="aapl"
     )
     symbols = [x.strip() for x in symbols.split(",")]
     formatted = st.sidebar.radio(
