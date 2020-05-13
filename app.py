@@ -4,8 +4,9 @@ from typing import Dict, List
 import altair as alt
 import streamlit as st
 from yahooquery import Ticker
+import plotly.graph_objects as go
 
-BASE_ENDPOINTS = {
+BASE_MODULES = {
     "asset_profile": "Asset Profile",
     "calendar_events": "Calendar Events",
     "esg_scores": "ESG Scores",
@@ -44,17 +45,42 @@ BASE_ENDPOINTS = {
     "fund_top_holdings": "Fund Top Holdings",
 }
 
+PREMIUM = {
+    "p_balance_sheet": "Balance Sheet",
+    "p_cash_flow": "Cash Flow",
+    "p_income_statement": "Income Statement",
+    "p_company_360": "Company 360",
+    "p_portal": "Premium Portal",
+    "p_reports": "Research Reports",
+    "p_ideas": "Trade Ideas",
+    "p_technical_events": "Technical Events",
+    "p_value_analyzer": "Value Analyzer",
+    "p_value_analyzer_drilldown": "Value Analyzer Drilldown",
+}
+
 
 def format_func(option: str) -> str:
-    """Convert the BASE_ENDPOINTS key to a value
+    """Convert the BASE_MODULES key to a value
 
     Arguments:
-        option {str} -- The key identifying the endpoint.
+        option {str} -- The key identifying the module.
 
     Returns:
-        str -- The value. A nice endpoint name
+        str -- The value. A nice module name
     """
-    return BASE_ENDPOINTS[option]
+    return BASE_MODULES[option]
+
+
+def format_premium(option: str) -> str:
+    """Convert the PREMIUM key to a value
+
+    Arguments:
+        option {str} -- The key identifying the module.
+
+    Returns:
+        str -- The value. A nice module name
+    """
+    return PREMIUM[option]
 
 
 @st.cache
@@ -76,42 +102,77 @@ def get_data(ticker: Ticker, attribute: str, *args) -> Dict:
     return data
 
 
+@st.cache(allow_output_mutation=True)
+def init_ticker(symbols, **kwargs):
+    return Ticker(symbols, **kwargs)
+
+
 def main():
     """Run this to run the application"""
     st.sidebar.subheader("YahooQuery")
     symbols = st.sidebar.text_input(
         "Enter symbol or list of symbols (comma, space separated)", value="aapl"
     )
-    formatted = st.sidebar.radio(
-        "Format data returned from API", options=[True, False])
-    formatted_str = "" if formatted else ", formatted=False"
 
-    tickers = Ticker(symbols, formatted=formatted)
+    asynchronous = st.sidebar.radio(
+        "Make Asynchronous requests?", options=[False, True]
+    )
+    asynchronous_str = "" if not asynchronous else ", asynchronous=True"
+
+    formatted = st.sidebar.radio(
+        "Format data returned from API", options=[False, True])
+    formatted_str = "" if not formatted else ", formatted=True"
+
+    username = st.sidebar.text_input(
+        label="Username",
+        value=""
+    )
+
+    password = st.sidebar.text_input(
+        label="Password",
+        value="",
+        type="password"
+    )
+
+    tickers = init_ticker(
+        symbols,
+        formatted=formatted,
+        asynchronous=asynchronous,
+        username=username,
+        password=password)
 
     page = st.sidebar.selectbox(
-        "Choose a page", ["Homepage", "Base", "Base - Multiple", "Options", "Historical Pricing"]
+        "Choose a page", ["Homepage", "Modules", "Options", "Historical Pricing", "Premium"]
     )
+
+    strings = {
+        'formatted_str': formatted_str,
+        'asynchronous_str': asynchronous_str,
+        'username': username,
+        'password': password
+    }
 
     st.markdown("# Welcome to [YahooQuery](https://github.com/dpguthrie/yahooquery)")
 
     if page == "Homepage":
-        homepage_view(tickers, symbols, formatted_str)
-    elif page == "Base":
-        base_view(tickers, symbols, formatted_str)
-    elif page == "Base - Multiple":
-        base_multiple_view(tickers, symbols, formatted_str)
+        homepage_view(tickers, symbols, strings)
+    elif page == "Premium":
+        premium_view(tickers, symbols, strings)
+    elif page == "Modules":
+        base_view(tickers, symbols, strings)
     elif page == "Options":
-        options_view(tickers, symbols, formatted_str)
+        options_view(tickers, symbols, strings)
     else:
-        history_view(tickers, symbols, formatted_str)
+        history_view(tickers, symbols, strings)
 
 
-def homepage_view(tickers: Ticker, symbols: List[str], formatted_str: str):
+def homepage_view(tickers: Ticker, symbols: List[str], strings: dict):
     """Provides the view of the Home Page
 
     Arguments:
         tickers {Ticker} -- A yahaooquery Ticker object
         symbols {List[str]} -- A list of symbols
+        strings {dict} -- Dictionary containing strings used in Ticker init
     """
 
     st.markdown(
@@ -121,108 +182,126 @@ def homepage_view(tickers: Ticker, symbols: List[str], formatted_str: str):
 
         ### Instructions
 
-        Enter a symbol or list of symbols in the box to the left (**comma
-        separated**).  Then select different pages in the dropdown to view
-        the data available to you.
+        Enter a symbol or list of symbols in the box to the left.  Then select
+        different pages in the dropdown to view the data available to you.
 
         ### Ticker Usage
 
-        The `Ticker` class provides the access point to data residing on
+        The `Ticker` class provides one of the access points to data residing on
         Yahoo Finance.  It accepts either a symbol or list of symbols.
         Additionally, you can supply `formatted` as a keyword argument
-        to the class to format the data returned from the API (default is
-        `True`)
+        to the class to return formatted data from the API (default is
+        `False`).  Another keyword argument you can supply is `asynchronous`.
+        This will allow the `Ticker` class to make asynchronous requests when
+        multiple symbols are passed.  The default value is `False`.
 
         ```python
         from yahooquery import Ticker
 
-        tickers = Ticker('{symbols}')
+        tickers = Ticker('{symbols}'{strings['formatted_str']}{strings['asynchronous_str']})
         ```
     """
     )
     st.help(tickers)
 
 
-def base_view(tickers: Ticker, symbols: List[str], formatted_str: str):
+def premium_view(tickers: Ticker, symbols: List[str], strings: dict):
     """A view of the basic functionality of Ticker.
 
-    The user can select an endpoint and the help text, code and result will be presented.
+    The user can select a module and the help text, code and result will be presented.
 
     Arguments:
         tickers {Ticker} -- A yahaooquery Ticker object
         symbols {List[str]} -- A list of symbols
+        strings {dict} -- Dictionary containing strings used in Ticker init
     """
 
-    st.header("Base Endpoints")
+    st.header("Premium Data")
     st.write(
         """
-        Select an option below to see the data available through
-        the base endpoints."""
+        Select an option below to see the premium data available"""
     )
-    endpoint = st.selectbox(
-        "Select Endpoint", options=sorted(list(BASE_ENDPOINTS.keys())), format_func=format_func
+    module = st.selectbox(
+        "Select Data", options=sorted(list(PREMIUM.keys())), format_func=format_premium
     )
-    st.help(getattr(Ticker, endpoint))
-    is_property = isinstance(getattr(Ticker, endpoint), property)
+    st.help(getattr(Ticker, module))
+    is_property = isinstance(getattr(Ticker, module), property)
     if is_property:
-        st.code(f"Ticker('{symbols}'{formatted_str}).{endpoint}", language="python")
-        data = get_data(tickers, endpoint)
+        st.code(f"Ticker('{symbols}'{strings['formatted_str']}{strings['asynchronous_str']}).{module}", language="python")
+        data = get_data(tickers, module)
     else:
         frequency = st.selectbox("Select Frequency", options=["Annual", "Quarterly"])
         arg = frequency[:1].lower()
-        st.code(f"Ticker('{symbols}'{formatted_str}).{endpoint}(frequency='{arg}')")
-        data = get_data(tickers, endpoint, arg)
+        st.code(f"Ticker('{symbols}'{strings['formatted_str']}{strings['asynchronous_str']}).{module}(frequency='{arg}')")
+        data = get_data(tickers, module, arg)
     st.write(data)
 
 
-def base_multiple_view(tickers: Ticker, symbols: List[str], formatted_str: str):
+def base_view(tickers: Ticker, symbols: List[str], strings: dict):
     """A view of the basic functionality of Ticker.
 
-    The user can select an endpoint and the help text, code and result will be presented.
+    The user can select a module and the help text, code and result will be presented.
 
     Arguments:
         tickers {Ticker} -- A yahaooquery Ticker object
         symbols {List[str]} -- A list of symbols
+        strings {dict} -- Dictionary containing strings used in Ticker init
     """
 
-    st.header("Base Endpoints - Multiple")
-    st.markdown(
-        """
-        Two methods to the `Ticker` class allow you to obtain multiple
-        endpoints with one call.
-
-        - the `get_endpoints` method takes a list
-        of allowable endpoints, which you can view through `Ticker.ENDPOINTS`
-        - the `all_endpoints` property retrieves all Base endpoints"""
-    )
-    method = st.selectbox("Select Method", options=["All Endpoints", "Multiple Endpoints"], index=1)
-    if method == "All Endpoints":
-        st.help(getattr(Ticker, "all_endpoints"))
-        st.code(f"Ticker('{symbols}'{formatted_str}).all_endpoints", language="python")
-        data = get_data(tickers, "all_endpoints")
-        st.json(data)
-    else:
-
-        default_endpoints = ["assetProfile"]
-        endpoints = st.multiselect(
-            "Select endpoints",
-            options=sorted(Ticker.ENDPOINTS),  # pylint: disable=protected-access
-            default=default_endpoints,
+    st.header("Modules")
+    method = st.selectbox("Select Method", options=["Single Module", "Multiple Modules", "All Modules"])
+    if method == "Single Module":
+        module = st.selectbox(
+            "Select Module", options=sorted(list(BASE_MODULES.keys())), format_func=format_func
         )
-        st.help(getattr(Ticker, "get_endpoints"))
-        st.code(f"Ticker('{symbols}'{formatted_str}).get_endpoints({endpoints})", language="python")
-        if not endpoints:
-            st.warning("You must select at least one endpoint")
+        st.help(getattr(Ticker, module))
+        is_property = isinstance(getattr(Ticker, module), property)
+        if is_property:
+            st.code(f"Ticker('{symbols}'{strings['formatted_str']}{strings['asynchronous_str']}).{module}", language="python")
+            data = get_data(tickers, module)
         else:
-            data = get_data(tickers, "get_endpoints")(endpoints)
-            st.json(data)
+            frequency = st.selectbox("Select Frequency", options=["Annual", "Quarterly"])
+            arg = frequency[:1].lower()
+            st.code(f"Ticker('{symbols}'{strings['formatted_str']}{strings['asynchronous_str']}).{module}(frequency='{arg}')")
+            data = get_data(tickers, module, arg)
+        st.write(data)
+    else:
+        st.markdown(
+            """
+            Two methods to the `Ticker` class allow you to obtain multiple
+            modules with one call.
 
+            - the `get_modules` method takes a list
+            of allowable modules, which you can view through `Ticker.MODULES`
+            - the `all_modules` property retrieves all Base modules"""
+        )
+        if method == "All Modules":
+            st.help(getattr(Ticker, "all_modules"))
+            st.code(f"Ticker('{symbols}'{strings['formatted_str']}{strings['asynchronous_str']}).all_modules", language="python")
+            data = get_data(tickers, "all_modules")
+            st.json(data)
+        else:
+
+            default_modules = ["assetProfile"]
+            modules = st.multiselect(
+                "Select modules",
+                options=sorted(Ticker.MODULES),  # pylint: disable=protected-access
+                default=default_modules,
+            )
+            st.help(getattr(Ticker, "get_modules"))
+            st.code(f"Ticker('{symbols}'{strings['formatted_str']}).get_modules({modules})", language="python")
+            if not modules:
+                st.warning("You must select at least one module")
+            else:
+                data = get_data(tickers, "get_modules")(modules)
+                st.json(data)
+    
 
 # Ideas for Improvements
 # Reset index to get column headers
 # Buttons under Table to download data
 # Some kind of chart that helps me understand the data/ get insights.
-def options_view(tickers: Ticker, symbols: List[str], formatted_str: str):
+def options_view(tickers: Ticker, symbols: List[str], strings: dict):
     """Provides an illustration of the `option_chain` method
 
     Arguments:
@@ -237,13 +316,12 @@ def options_view(tickers: Ticker, symbols: List[str], formatted_str: str):
             dates for a given symbol(s)
     """
     )
-    st.help(getattr(Ticker, "option_chain"))
-    st.code(f"Ticker('{symbols}').option_chain", language="python")
+    st.code(f"Ticker('{symbols}'{strings['formatted_str']}{strings['asynchronous_str']}).option_chain", language="python")
     data = get_data(tickers, "option_chain")
     st.write(data)
 
 
-def history_view(tickers: Ticker, symbols: List[str], formatted_str: str):
+def history_view(tickers: Ticker, symbols: List[str], strings: dict):
     """Provides an illustration of the `Ticker.history` method
 
     Arguments:
@@ -288,7 +366,7 @@ def history_view(tickers: Ticker, symbols: List[str], formatted_str: str):
         "Select Interval", options=Ticker.INTERVALS, index=8  # pylint: disable=protected-access
     )
     args_string = [str(k) + "='" + str(v) + "'" for k, v in history_args.items() if v is not None]
-    st.code(f"Ticker('{symbols}').history({', '.join(args_string)})", language="python")
+    st.code(f"Ticker('{symbols}'{strings['formatted_str']}{strings['asynchronous_str']}).history({', '.join(args_string)})", language="python")
     dataframe = tickers.history(**history_args)
 
     if isinstance(dataframe, dict):
@@ -303,16 +381,17 @@ def history_view(tickers: Ticker, symbols: List[str], formatted_str: str):
                     height=400
                 )
             )
+            st.write("", "", chart)
         else:
-            chart = (
-                alt.Chart(dataframe.reset_index())
-                .mark_line()
-                .encode(alt.Y("adjclose:Q", scale=alt.Scale(zero=False)), x="index").properties(
-                    width=660,
-                    height=400
-                )
-            )
-        st.write("", "", chart)
+            fig = go.Figure(data=go.Ohlc(
+                x=dataframe.index,
+                open=dataframe['open'],
+                high=dataframe['high'],
+                low=dataframe['low'],
+                close=dataframe['close']
+            ))
+            st.plotly_chart(fig)
+            
         st.dataframe(dataframe)
 
 
