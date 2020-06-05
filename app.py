@@ -390,6 +390,7 @@ def history_view(tickers: Ticker, symbols: List[str], strings: dict):
                 low=dataframe['low'],
                 close=dataframe['close']
             ))
+            fig.layout.xaxis.type = 'category'
             st.plotly_chart(fig)
             
         st.dataframe(dataframe)
