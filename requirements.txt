@@ -3,3 +3,4 @@ git+https://github.com/dpguthrie/yahooquery.git@feat/set-cookie-and-crumb
 plotly==5.12.0
 webdriver-manager<=3.9
 selenium<=4.11
+altair<5
