@@ -1,2 +1,4 @@
 libxml2
 libxslt-dev
+chromium
+chromium-driver
