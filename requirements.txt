@@ -1,3 +1,3 @@
 streamlit==1.17.0
-https://github.com/dpguthrie/yahooquery/archive/feat/set-cookie-and-crumb.zip
+yahooquery @ git+https://github.com/dpguthrie/yahooquery@feat/set-cookie-and-crumb
 plotly==5.12.0
